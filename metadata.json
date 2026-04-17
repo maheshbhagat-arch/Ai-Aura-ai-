@@ -1,0 +1,5 @@
+{
+  "name": "Aura: Your AI Companion",
+  "description": "A supportive and sweet AI companion with real-time voice interaction.",
+  "requestFramePermissions": ["microphone"]
+}
