@@ -103,11 +103,16 @@ export function useGeminiLive() {
         },
         callbacks: {
           onopen: () => {
+            if (!audioContextRef.current || !streamRef.current) {
+              console.warn("Connection opened but audio context or stream was already closed.");
+              return;
+            }
+
             setState('connected');
             
             // Setup Microphone Processor
-            const source = audioContextRef.current!.createMediaStreamSource(streamRef.current!);
-            processorRef.current = audioContextRef.current!.createScriptProcessor(4096, 1, 1);
+            const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
+            processorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1);
             
             processorRef.current.onaudioprocess = (e) => {
               if (isMuted) return;
@@ -121,14 +126,16 @@ export function useGeminiLive() {
               const base64Data = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
               
               sessionPromise.then(session => {
-                session.sendRealtimeInput({
-                  audio: { data: base64Data, mimeType: 'audio/pcm;rate=24000' }
-                });
+                if (session) {
+                  session.sendRealtimeInput({
+                    audio: { data: base64Data, mimeType: 'audio/pcm;rate=24000' }
+                  });
+                }
               });
             };
 
             source.connect(processorRef.current);
-            processorRef.current.connect(audioContextRef.current!.destination);
+            processorRef.current.connect(audioContextRef.current.destination);
           },
           onmessage: async (message: LiveServerMessage) => {
             // Handle Audio Output
@@ -193,6 +200,15 @@ export function useGeminiLive() {
     return () => stop();
   }, [stop]);
 
+  const sendTextMessage = useCallback((text: string) => {
+    if (sessionRef.current && state === 'connected') {
+      sessionRef.current.sendRealtimeInput({
+        text
+      });
+      setTranscript(prev => [...prev, { role: 'user', text }]);
+    }
+  }, [state]);
+
   return {
     state,
     error,
@@ -200,6 +216,7 @@ export function useGeminiLive() {
     setIsMuted,
     transcript,
     connect,
-    stop
+    stop,
+    sendTextMessage
   };
 }

@@ -1,5 +1,5 @@
 {
-  "name": "Aura: Your AI Companion",
-  "description": "A supportive and sweet AI companion with real-time voice interaction.",
+  "name": "Muse: AI Companion Hub",
+  "description": "An immersive hub for AI companions with Android support. Features real-time voice interaction with Aura.",
   "requestFramePermissions": ["microphone"]
 }
